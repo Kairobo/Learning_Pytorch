@@ -1,4 +1,4 @@
-# from https://github.com/kuangliu/pytorch-cifar.git
+'''Train CIFAR10 with PyTorch.'''
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -13,6 +13,7 @@ import argparse
 
 from models import *
 from utils import progress_bar
+
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -96,12 +97,9 @@ def train(epoch):
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-        print('Batch_i: %.3f | Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                % (batch_idx, train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-        if False:
-            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
+        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
 def test(epoch):
     global best_acc
@@ -119,11 +117,9 @@ def test(epoch):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-            print('Batch_i: %.3f | Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                    % (batch_idx, test_loss/(batch_idx+1), 100.*correct/total, correct, total))
-            if False:
-                progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                    % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+
+            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     # Save checkpoint.
     acc = 100.*correct/total

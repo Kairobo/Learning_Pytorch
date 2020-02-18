@@ -2,3 +2,5 @@
 .idea/
 /files
 /results
+/data
+__pycache__/

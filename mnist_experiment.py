@@ -6,23 +6,45 @@ import torch.optim as optim
 import os
 
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self, add_batch_norm = False, add_dropout_fn = False, add_dropout_cn = False):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
+        self.add_dropout_fn = add_dropout_fn
+        self.add_dropout_cn = add_dropout_cn
+        self.add_batch_norm = add_batch_norm
+        if self.add_dropout_cn:
+            self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
-        self.bn1 = nn.BatchNorm2d(10)
-        self.bn2 = nn.BatchNorm2d(20)
-        self.bn3 = nn.BatchNorm1d(50)
+        if self.add_batch_norm:
+            self.bn1 = nn.BatchNorm2d(10)
+            self.bn2 = nn.BatchNorm2d(20)
+            self.bn3 = nn.BatchNorm1d(50)
 
     def forward(self, x):
-        x = F.relu(self.bn1(F.max_pool2d(self.conv1(x), 2)))
-        x = F.relu(self.bn2(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2)))
+        if self.add_batch_norm:
+            x = F.relu(self.bn1(F.max_pool2d(self.conv1(x), 2)))
+            if self.add_dropout_cn:
+                x = F.relu(self.bn2(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2)))
+            else:
+                x = F.relu(self.bn2(F.max_pool2d(self.conv2(x), 2)))
+        else:
+            x = F.relu(F.max_pool2d(self.conv1(x), 2))
+            if self.add_dropout_cn:
+                x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+            else:
+                x = F.relu(F.max_pool2d(self.conv2(x), 2))
+
         x = x.view(-1, 320)
-        x = F.relu(self.bn3(self.fc1(x)))
-        x = F.dropout(x, training=self.training)
+        if self.add_batch_norm:
+            x = F.relu(self.bn3(self.fc1(x)))
+        else:
+            x = F.relu(self.fc1(x))
+        if self.add_dropout_fn:
+            x = F.dropout(x, training=self.training)
+        else:
+            pass
         x = self.fc2(x)
         return F.log_softmax(x)
 
@@ -57,7 +79,7 @@ test_loader = torch.utils.data.DataLoader(
 examples = enumerate(test_loader)
 batch_idx, (example_data, example_targets) = next(examples)
 
-network = Net()
+network = Net(add_batch_norm=False, add_dropout_cn= False, add_dropout_fn=True)
 optimizer = optim.SGD(network.parameters(), lr=learning_rate,
                       momentum=momentum)
 
@@ -66,8 +88,8 @@ train_counter = []
 test_losses = []
 test_counter = [i*len(train_loader.dataset) for i in range(n_epochs + 1)]
 
-if not os.path.exists('./result'):
-    os.system("mkdir -p %s"%'./result')
+if not os.path.exists('./results'):
+    os.system("mkdir -p %s"%'./results')
 
 def train(epoch):
   network.train()
